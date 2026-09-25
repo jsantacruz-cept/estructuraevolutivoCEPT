@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Evolutivo de psicoterapia · prototipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF2F6; --surface:#FFFFFF; --ink:#16212E; --muted:#5A6676; --line:#D5DCE4;
+  --srt:#1F4E8C; --srt-soft:#E3ECF7; --warn:#9A5B0C; --warn-soft:#FCEFD9; --ok:#2D7552; --ok-soft:#E1F1E8;
+  --sel:#1F4E8C; --sel-ink:#FFFFFF;
+  --ui:"Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --doc:"Source Serif 4", Georgia, "Times New Roman", serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1620; --surface:#18212D; --ink:#E4EAF1; --muted:#9AA7B6; --line:#2C3847;
+    --srt:#7EA8E0; --srt-soft:#1D2D44; --warn:#E8B062; --warn-soft:#3A2A12; --ok:#7CC9A0; --ok-soft:#173226;
+    --sel:#7EA8E0; --sel-ink:#0F1620;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1620; --surface:#18212D; --ink:#E4EAF1; --muted:#9AA7B6; --line:#2C3847;
+  --srt:#7EA8E0; --srt-soft:#1D2D44; --warn:#E8B062; --warn-soft:#3A2A12; --ok:#7CC9A0; --ok-soft:#173226;
+  --sel:#7EA8E0; --sel-ink:#0F1620;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:15px;line-height:1.5}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--srt);outline-offset:2px}
+
+header.top{max-width:1240px;margin:0 auto;padding:28px 20px 8px}
+header.top h1{margin:0;font-size:1.6rem;font-weight:700;letter-spacing:-.01em}
+header.top p{margin:6px 0 0;color:var(--muted);max-width:70ch}
+.notice{display:inline-block;margin-top:12px;padding:6px 10px;border-radius:6px;background:var(--warn-soft);color:var(--warn);font-size:.88rem;font-weight:500}
+
+.layout{max-width:1240px;margin:0 auto;padding:16px 20px 60px;display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:24px;align-items:start}
+@media (max-width:960px){.layout{grid-template-columns:1fr}}
+
+.block{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:14px}
+.block h2{margin:0 0 2px;font-size:1.05rem;font-weight:600}
+.block .hint{margin:0 0 12px;color:var(--muted);font-size:.88rem}
+.block .tag{font-size:.75rem;font-weight:600;color:var(--srt);background:var(--srt-soft);padding:2px 7px;border-radius:4px;margin-left:6px;vertical-align:2px}
+.sub{font-size:.85rem;font-weight:600;color:var(--muted);margin:12px 0 6px}
+
+.rules{border-style:dashed}
+.rule{display:flex;gap:10px;align-items:flex-start;margin:8px 0;cursor:pointer}
+.rule input{margin-top:4px;accent-color:var(--srt)}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:5px 12px;cursor:pointer;font-size:.9rem;line-height:1.3}
+.chip:hover{border-color:var(--srt)}
+.chip[aria-pressed="true"]{background:var(--sel);border-color:var(--sel);color:var(--sel-ink)}
+.chip.support::after{content:" (apoyo)";opacity:.7;font-size:.8em}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:7px 14px;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--sel);color:var(--sel-ink)}
+.seg.small button{padding:4px 10px;font-size:.85rem}
+
+.row{border-top:1px solid var(--line);padding:12px 0 4px;margin-top:10px}
+.row:first-child{border-top:0;margin-top:0}
+.row-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.row-head strong{font-weight:600}
+.sgroup{border-top:1px solid var(--line);padding:6px 0}
+.sgroup:first-child{border-top:0}
+.sgroup > .toggle{font-weight:600}
+.srow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:5px 0 5px 24px}
+.sname{flex:1 1 200px}
+.srow .ctxs{flex-basis:100%;padding-top:4px;align-items:center}
+.chip.gen{border-style:dashed}
+.chip.gen[aria-pressed="true"]{border-style:solid}
+.x{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:.85rem;text-decoration:underline}
+.field{display:block;margin:8px 0}
+.field span{display:block;font-size:.85rem;color:var(--muted);margin-bottom:3px}
+input[type=text],textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:7px 10px;background:var(--bg)}
+textarea{min-height:60px;resize:vertical}
+.inline{display:flex;gap:8px}
+.inline input{flex:1}
+.addbtn{border:1px solid var(--line);background:transparent;border-radius:6px;padding:7px 12px;cursor:pointer}
+.toggle{display:flex;gap:8px;align-items:center;cursor:pointer;margin:6px 0}
+.toggle input{accent-color:var(--srt)}
+.empty{color:var(--muted);font-size:.88rem;font-style:italic;margin:8px 0 0}
+.hidden{display:none!important}
+
+/* Vista previa tipo hoja de HC */
+aside.preview{position:sticky;top:calc(16px + env(safe-area-inset-top,0px));max-height:calc(100vh - 32px - env(safe-area-inset-top,0px));overflow:auto}
+.prev{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:14px}
+.prev summary{padding:12px 18px;font-weight:600;cursor:pointer}
+.prev .prev-body{padding:0 18px 14px}
+.prev textarea{min-height:120px;font-family:var(--doc);font-size:.95rem;line-height:1.55}
+.out{outline:none;border-radius:4px;min-height:1.6em}
+.out:hover{background:var(--bg)}
+.out:focus{background:var(--bg);box-shadow:0 0 0 2px var(--srt-soft)}
+.out:empty::before{content:attr(data-empty);font-family:var(--ui);font-size:.85rem;color:var(--muted)}
+.edtag{font-size:.72rem;font-weight:500;border:1px solid currentColor;border-radius:4px;padding:0 6px;opacity:.9}
+.stale{font-family:var(--ui);font-size:.82rem;background:var(--warn-soft);color:var(--warn);border-radius:6px;padding:6px 10px;margin:4px 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stale button{border:1px solid currentColor;background:transparent;color:inherit;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:.8rem}
+.edit-hint{font-family:var(--ui);font-size:.8rem;color:var(--muted);margin:10px 0 0}
+@media (max-width:960px){
+  .layout{display:flex;flex-direction:column}
+  aside.preview{display:contents}
+  .prev{order:-1;margin-bottom:0}
+  .sheet{order:1}
+}
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.sheet-top{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.sheet-top h2{margin:0;font-size:1rem}
+.sheet-top small{color:var(--muted)}
+.sheet-body{padding:6px 18px 16px;font-family:var(--doc);font-size:1rem;line-height:1.65}
+.bar{background:var(--srt);color:#fff;font-family:var(--ui);font-size:.85rem;font-weight:600;padding:5px 10px;margin:14px -18px 8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+
+.block h2{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.block h2 .clr{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:6px;padding:3px 10px;font-size:.8rem;font-weight:500;cursor:pointer}
+.block h2 .clr:hover{color:var(--ink);border-color:var(--srt)}
+.bar .clr{border:1px solid currentColor;background:transparent;color:inherit;border-radius:4px;padding:1px 8px;font-size:.78rem;font-weight:500;cursor:pointer;opacity:.9}
+.bar .clr:hover{opacity:1}
+:root[data-theme="dark"] .bar{color:#0F1620}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .bar{color:#0F1620}}
+.sheet-body p{margin:0 0 6px;border-bottom:1px dotted var(--line);padding-bottom:6px}
+mark{background:var(--warn-soft);color:var(--warn);font-family:var(--ui);font-size:.85em;padding:1px 4px;border-radius:3px}
+.fixed-note{font-family:var(--ui);font-size:.82rem;color:var(--muted);margin-top:10px}
+.status{padding:12px 18px;border-top:1px solid var(--line);font-size:.9rem}
+.status.ok{background:var(--ok-soft);color:var(--ok)}
+.status ul{margin:6px 0 0;padding-left:18px;color:var(--warn)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line)}
+.primary{background:var(--srt);color:#fff;border:0;border-radius:6px;padding:9px 16px;font-weight:600;cursor:pointer}
+:root[data-theme="dark"] .primary{color:#0F1620}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .primary{color:#0F1620}}
+.primary:disabled{opacity:.45;cursor:not-allowed}
+.secondary{background:transparent;border:1px solid var(--line);border-radius:6px;padding:9px 14px;cursor:pointer}
+.toast{font-size:.85rem;color:var(--ok);align-self:center}
+@media (prefers-reduced-motion:no-preference){.chip,.seg button{transition:background .12s,border-color .12s}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>Evolutivo de psicoterapia</h1>
+  <p>Carga estructurada para cumplir el formato SRT. Los datos del paciente salen de la cabecera de la historia clínica y los del profesional, de la firma: acá se cargan solo la evolución de los síntomas y las intervenciones.</p>
+  <span class="notice">Prototipo de validación, se espera validación del equipo clínico.</span>
+</header>
+
+<div class="layout">
+<main>
+
+  <section class="block rules" aria-labelledby="h-rules">
+    <h2 id="h-rules">Reglas de validación en prueba</h2>
+    <p class="hint">Estas reglas están abiertas. Se pueden cambiar para comparar variantes con los profesionales.</p>
+    <label class="rule"><input type="checkbox" id="r-estable" checked><span>Exigir al menos una intervención también cuando la evolución es estable</span></label>
+    <label class="rule"><input type="checkbox" id="r-apoyo" checked><span>Aceptar “espacio de escucha” como intervención suficiente</span></label>
+    <label class="rule"><input type="checkbox" id="r-present"><span>Exigir la presentación observada en sesión</span></label>
+  </section>
+
+  <section class="block" aria-labelledby="h2">
+    <h2 id="h2">Presentación en sesión <span class="tag">Presentación en sesión</span><button type="button" class="clr" data-clr="pres">Borrar</button></h2>
+    <p class="hint">Lo que observa el profesional, no lo que refiere el paciente.</p>
+    <div class="sub">Modalidad</div>
+    <div class="seg small" id="modal" role="group" aria-label="Modalidad"></div>
+    <div class="sub">Horario</div>
+    <div class="seg small" id="punct" role="group" aria-label="Horario"></div>
+    <div class="sub">Actitud</div>
+    <div class="chips" id="actitud"></div>
+    <div class="sub">Estado</div>
+    <div class="srow" style="padding-left:0"><span class="sname">Curso del pensamiento</span><div class="seg small" id="e-curso" role="group" aria-label="Curso del pensamiento"></div></div>
+    <div class="srow" style="padding-left:0"><span class="sname">Asociación de ideas</span><div class="chips" id="e-asoc"></div></div>
+    <div class="srow" style="padding-left:0"><span class="sname">Sostiene la idea directriz</span><div class="seg small" id="e-directriz" role="group" aria-label="Sostiene la idea directriz"></div></div>
+    <div class="srow" style="padding-left:0"><span class="sname">Alteraciones en la sensopercepción</span><div class="seg small" id="e-senso" role="group" aria-label="Alteraciones en la sensopercepción"></div></div>
+  </section>
+
+  <section class="block" aria-labelledby="h1">
+    <h2 id="h1">Estado global <span class="tag">Evolución de los síntomas</span><button type="button" class="clr" data-clr="global">Borrar</button></h2>
+    <p class="hint">Opcional. Comparación con el encuentro anterior.</p>
+    <div class="seg" id="global" role="group" aria-label="Estado global"></div>
+    <div id="mag-wrap" class="hidden">
+      <div class="sub">Magnitud</div>
+      <div class="seg small" id="mag" role="group" aria-label="Magnitud"></div>
+    </div>
+    <label class="toggle hidden" id="sc-wrap"><input type="checkbox" id="sin-cambios"> Sin cambios clínicos significativos desde el encuentro anterior</label>
+  </section>
+
+  <section class="block" aria-labelledby="h3">
+    <h2 id="h3">Síntomas referidos <span class="tag">Evolución de los síntomas</span><button type="button" class="clr" data-clr="sint">Borrar</button></h2>
+    <p class="hint">Marcá los grupos de síntomas que presenta el paciente. En cada síntoma, un toque indica cómo evolucionó.</p>
+    <div id="sint-cat"></div>
+    <div class="inline" style="margin-top:10px">
+      <input type="text" id="sint-otro" placeholder="Otro síntoma" aria-label="Otro síntoma">
+      <button class="addbtn" id="sint-add">Agregar</button>
+    </div>
+    <div id="sint-rows" style="margin-top:8px"></div>
+    <label class="field"><span>Observaciones (opcional)</span><textarea id="sint-libre"></textarea></label>
+  </section>
+
+  <section class="block" aria-labelledby="h4">
+    <h2 id="h4">Tareas pactadas y avances <span class="tag">Intervenciones</span><button type="button" class="clr" data-clr="tareas">Borrar</button></h2>
+    <p class="hint">Opcional. Si no se completa, no aparece en el texto.</p>
+    <label class="toggle"><input type="checkbox" id="tarea-on"> Había una tarea pactada desde el encuentro anterior</label>
+    <div id="tarea-box" class="hidden">
+      <div id="t-cat"></div>
+      <div class="sub">Cumplimiento</div>
+      <div class="seg small" id="t-grado" role="group" aria-label="Cumplimiento"></div>
+      <div id="t-res-wrap">
+        <div class="sub">Resultado</div>
+        <div class="seg small" id="t-res" role="group" aria-label="Resultado"></div>
+      </div>
+      <label class="field hidden" id="t-mot-wrap"><span>Motivo referido (opcional)</span><input type="text" id="t-mot"></label>
+    </div>
+    <label class="toggle"><input type="checkbox" id="av-on"> Avances generales <span class="tag">Evolución de los síntomas</span></label>
+    <div id="av-box" class="hidden" style="padding-left:24px">
+      <div class="chips" id="ph-av"></div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="h5">
+    <h2 id="h5">Intervenciones en sesión <span class="tag">Intervenciones</span><button type="button" class="clr" data-clr="interv">Borrar</button></h2>
+    <p class="hint">Marcá los grupos de intervenciones que usaste y elegí las que correspondan.</p>
+    <div id="int-cat"></div>
+  </section>
+
+  <section class="block" aria-labelledby="h7">
+    <h2 id="h7">Cierre de la consulta <span class="tag">Intervenciones</span><button type="button" class="clr" data-clr="cierre">Borrar</button></h2>
+    <p class="hint">Opcional. No tiene ninguna opción preseleccionada: si no se marca, no aparece en el texto.</p>
+    <div class="sub">Evaluación de riesgo</div>
+    <div class="seg small" id="riesgo" role="group" aria-label="Evaluación de riesgo"></div>
+    <label class="field hidden" id="riesgo-c-wrap"><span>Conducta adoptada</span><input type="text" id="riesgo-c" placeholder="p. ej., se da aviso a la coordinación y se solicita interconsulta con Psiquiatría"></label>
+    <div class="sub">Cómo se retira</div>
+    <div class="chips" id="ph-retiro"></div>
+  </section>
+
+</main>
+
+<aside class="preview" aria-labelledby="h-prev">
+  <details class="prev" open>
+    <summary>Evolutivo anterior</summary>
+    <div class="prev-body">
+      <textarea id="prev" aria-label="Evolutivo anterior" placeholder="Pegá acá el evolutivo de la consulta anterior para tenerlo como referencia mientras cargás el nuevo."></textarea>
+    </div>
+  </details>
+  <div class="sheet">
+    <div class="sheet-top"><h2 id="h-prev">Evolutivo generado</h2><small>Vista como en la HC</small></div>
+    <div class="sheet-body">
+      <div id="sec0"><div class="bar"><span>Presentación en sesión</span><span class="edtag hidden" id="ed0">Editado</span></div>
+      <div class="stale hidden" id="stale0"></div>
+      <div class="out" id="out0" contenteditable="true" data-empty="Sin datos cargados en Presentación en sesión."></div></div>
+      <div class="bar"><span>Descripción de la evolución de los síntomas</span><span class="edtag hidden" id="ed1">Editado</span></div>
+      <div class="stale hidden" id="stale1"></div>
+      <div class="out" id="out1" contenteditable="true" data-empty=""></div>
+      <div class="bar"><span>Intervenciones terapéuticas</span><span class="edtag hidden" id="ed2">Editado</span></div>
+      <div class="stale hidden" id="stale2"></div>
+      <div class="out" id="out2" contenteditable="true" data-empty=""></div>
+      <p class="edit-hint">El texto se puede editar antes de copiarlo.</p>
+    </div>
+    <div class="status" id="status" aria-live="polite"></div>
+    <div class="actions">
+      <button class="primary" id="copy">Copiar evolutivo</button>
+      <button class="secondary" id="reroll">Otra redacción</button>
+      <button class="secondary" id="restore">Restaurar texto generado</button>
+      <button class="secondary" id="ej1">Ejemplo: desfavorable</button>
+      <button class="secondary" id="ej2">Ejemplo: estable</button>
+      <button class="secondary" id="reset">Empezar de nuevo</button>
+      <span class="toast" id="toast" aria-live="polite"></span>
+    </div>
+  </div>
+</aside>
+</div>
+
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const M = label => '\u0001' + label + '\u0002';            // marcador de dato faltante
+const joinY = arr => {
+  if (arr.length === 0) return '';
+  if (arr.length === 1) return arr[0];
+  const last = arr[arr.length-1];
+  const plain = last.replace(/[\u0001\u0002]/g,'').toLowerCase();
+  const conj = (/^h?i/.test(plain) && !/^hie/.test(plain)) ? ' e ' : ' y ';
+  return arr.slice(0,-1).join(', ') + conj + last;
+};
+
+/* Catálogos de ejemplo */
+const GLOBAL = [['favorable','Favorable'],['estable','Estable'],['desfavorable','Desfavorable']];
+const MAG = [['leve','Leve'],['moderada','Moderada'],['marcada','Marcada']];
+const ACTITUD = [{id:'comunicativa',label:'Comunicativa'},{id:'colaboradora',label:'Colaboradora'},{id:'poco colaboradora',label:'Poca colaboración'},
+  {id:'participativa',label:'Participativa'},{id:'reticente',label:'Reticente'},{id:'demandante',label:'Demandante'},{id:'querellante',label:'Querellante'}];
+const E_CURSO = [['fluido','Fluido'],['disgregado','Disgregado'],['enlentecido','Enlentecido']];
+const E_SINO = [['si','Sí'],['no','No']];
+const ESTADO_V = {
+  'curso:fluido':['Curso del pensamiento fluido.','Pensamiento de curso fluido.','Se observa un curso de pensamiento fluido.'],
+  'curso:disgregado':['Curso del pensamiento disgregado.','Pensamiento de curso disgregado.','Se observa un curso de pensamiento disgregado.'],
+  'curso:enlentecido':['Curso del pensamiento enlentecido.','Pensamiento de curso enlentecido.','Se observa un curso de pensamiento enlentecido.'],
+  'asoc':['Asociación coherente de ideas.','Ideas asociadas de manera coherente.','Asocia las ideas de manera coherente.'],
+  'directriz:si':['Sostiene la idea directriz.','Mantiene la idea directriz del discurso.','Logra sostener la idea directriz.'],
+  'directriz:no':['No sostiene la idea directriz.','Con dificultad para sostener la idea directriz.','Pierde la idea directriz del discurso.'],
+  'senso:si':['Presenta alteraciones en la sensopercepción.','Se evidencian alteraciones sensoperceptivas.','Alteraciones en la sensopercepción presentes.'],
+  'senso:no':['Sin alteraciones en la sensopercepción.','No presenta alteraciones sensoperceptivas.','Sensopercepción sin alteraciones.']
+};
+const MODAL = [['presencial','Presencial'],['virtual','Virtual']];
+const PUNCT = [['horario','En horario'],['antes','Antes de lo acordado'],['fuera','Fuera de horario']];
+const ASIST_V = {
+  'presencial:horario':['Asiste según lo acordado.','Se presenta en el horario pautado.','Concurre a la consulta en el horario acordado.'],
+  'presencial:antes':['Asiste antes del horario acordado.','Se presenta antes del horario pautado.','Concurre a la consulta antes de lo acordado.'],
+  'presencial:fuera':['Asiste fuera del horario pautado.','Se presenta fuera del horario acordado.','Concurre a la consulta fuera del horario pautado.'],
+  'virtual:horario':['Se conecta a la consulta virtual en el horario pautado.','Asiste a la consulta virtual según lo acordado.','Consulta en modalidad virtual; se conecta en horario.'],
+  'virtual:antes':['Se conecta a la consulta virtual antes del horario pautado.','Consulta en modalidad virtual; se conecta antes de lo acordado.'],
+  'virtual:fuera':['Se conecta a la consulta virtual fuera del horario pautado.','Consulta en modalidad virtual; se conecta fuera del horario acordado.'],
+  'presencial:':['Consulta presencial.','Atención en modalidad presencial.'],
+  'virtual:':['Consulta en modalidad virtual.','Atención en modalidad virtual.']
+};
+['horario','antes','fuera'].forEach(p => ASIST_V[':'+p] = ASIST_V['presencial:'+p]);
+const ACTITUD_V = [x=>`Actitud ${x}.`, x=>`Presenta una actitud ${x}.`, x=>`Se observa una actitud ${x} durante la sesión.`];
+const PH_AV = [
+  {id:'autonomia', label:'Mayor autonomía', v:['Mayor autonomía.','Refiere mayor autonomía en su vida cotidiana.','Se evidencia un aumento de su autonomía.']},
+  {id:'actividades', label:'Recupera actividades', v:['Recupera actividades que había abandonado.','Retoma actividades que había dejado de realizar.','Logra reincorporar actividades previamente abandonadas.']},
+  {id:'vinculos', label:'Mejoría en vínculos', v:['Mejoría en el sostenimiento de vínculos.','Refiere mejoría en sus vínculos personales y familiares.','Logra sostener sus vínculos con mayor estabilidad.']},
+  {id:'habitos', label:'Nuevos hábitos', v:['Sostiene nuevos hábitos.','Logra incorporar y sostener nuevos hábitos.','Mantiene los nuevos hábitos incorporados.']},
+  {id:'autocuidado', label:'Autocuidado', v:['Mejoría en el autocuidado.','Refiere avances en su autocuidado.','Se observan avances en el cuidado personal.']},
+  {id:'tecnicas', label:'Usa técnicas aprendidas', v:['Logra atenuar la ansiedad con técnicas aprendidas.','Refiere controlar la ansiedad mediante las técnicas trabajadas.','Aplica las técnicas aprendidas para regular la ansiedad.']},
+  {id:'adherencia', label:'Adherencia al tratamiento', v:['Adherencia al tratamiento.','Mantiene adherencia al tratamiento en curso.','Sostiene el tratamiento con buena adherencia.']}
+];
+const PH_RETIRO = [
+  {id:'tranq', label:'Con tranquilidad', x:'con tranquilidad'},
+  {id:'estab', label:'Con mayor estabilidad', x:'con mayor estabilidad'}
+];
+const RETIRO_V = [x=>`Se retira de la consulta ${x}.`, x=>`Se retira del espacio ${x}.`, x=>`Finaliza la sesión ${x}.`];
+const RIESGO = [['no','No presenta ideas de auto/heteroagresión'],['si','Presenta ideas de auto/heteroagresión']];
+const RIESGO_NO_V = ['No presenta al momento actual ideas de auto/heteroagresión.',
+  'Al momento actual no se evidencian ideas de auto/heteroagresión.',
+  'Sin ideas de auto/heteroagresión al momento de la evaluación.'];
+const GLOBAL_V = {
+  favorable:[m=>`Evolución favorable, con ${m} mejoría respecto del encuentro anterior.`, m=>`Se observa una ${m} mejoría en relación con la sesión previa.`, m=>`Presenta una evolución favorable, con ${m} mejoría desde el último encuentro.`],
+  desfavorable:[m=>`Evolución desfavorable, con ${m} empeoramiento respecto del encuentro anterior.`, m=>`Se observa un ${m} empeoramiento en relación con la sesión previa.`, m=>`Presenta una evolución desfavorable, con ${m} empeoramiento desde el último encuentro.`],
+  estable:['Evolución estable respecto del encuentro anterior.','Se mantiene estable en relación con la sesión previa.','Evolución estable desde el último encuentro.']
+};
+const SINCAMBIOS_V = ['Sin cambios clínicos significativos.','No se registran cambios clínicos relevantes.','Sin modificaciones clínicas significativas.'];
+const deList = it => joinY(it.map(x=>'de '+x));
+const TEND_V = {
+  mejoria:[it=>`Refiere mejoría ${deList(it)}`, it=>`Manifiesta mejoría ${deList(it)}`, it=>`Refiere disminución ${deList(it)}`],
+  persiste:[it=>`Refiere persistencia ${deList(it)}`, it=>`${it.length>1?'Persisten':'Persiste'} ${joinY(it)}`, it=>`Continúa presentando ${joinY(it)}`],
+  empeora:[it=>`Refiere incremento ${deList(it)}`, it=>`Manifiesta aumento ${deList(it)}`, it=>`Refiere mayor intensidad ${deList(it)}`]
+};
+const GRADO_V = {
+  completa:[b=>`Realizó ${b}`, b=>`Pudo realizar ${b}`, b=>`Cumplió con ${b}`],
+  parcial:[b=>`Realizó parcialmente ${b}`, b=>`Pudo realizar ${b} de forma parcial`, b=>`Cumplió parcialmente con ${b}`],
+  no:[b=>`No realizó ${b}`, b=>`No pudo realizar ${b}`, b=>`No cumplió con ${b}`],
+  dificultad:[b=>`Refiere mayor dificultad para realizar ${b}`, b=>`Manifiesta dificultades para realizar ${b}`, b=>`Presenta mayor dificultad para cumplir con ${b}`]
+};
+const RES_V = {positivos:['con resultados positivos','obteniendo resultados positivos','con buenos resultados'],
+  parciales:['con resultados parciales','con resultados positivos aunque parciales','obteniendo resultados parciales'],
+  sin:['sin resultados observables','sin cambios observables','sin resultados significativos']};
+const PLAN_V = {
+  continuar:['Se indica continuar con el mismo lineamiento psicoterapéutico.','Se continúa con el lineamiento psicoterapéutico establecido.','Se mantiene el lineamiento terapéutico en curso.'],
+  ajuste:[x=>`Se ajusta la tarea pactada: ${x}.`, x=>`Se realizan ajustes en la tarea pactada: ${x}.`, x=>`Se reformula la tarea pactada: ${x}.`],
+  nuevo:[(d,o,f)=>`Se pauta nueva tarea de ${d}, con el objetivo de ${o}, a realizar ${f}.`, (d,o,f)=>`Se indica nueva tarea de ${d}, con el objetivo de ${o}, a realizar ${f}.`, (d,o,f)=>`Se acuerda nueva tarea de ${d}, orientada a ${o}, a realizar ${f}.`],
+  deriv:[(d,m)=>`Se sugiere derivación o interconsulta con ${d}, por ${m}.`, (d,m)=>`Se indica interconsulta con ${d}, por ${m}.`, (d,m)=>`Se solicita interconsulta con ${d}, motivada por ${m}.`]
+};
+const INT_GROUPS = [
+  ['Cognitivo-conductuales',['psico','hsueno','expo','reest','afront','autorreg']],
+  ['De apoyo',['cont','escucha','logros']]
+];
+const SINT_GROUPS = [
+  ['Ansiosos',['ansiedad generalizada','angustia','temor','estado de alerta','rumiación cognitiva','preocupación somática','dificultad en el afrontamiento de la sintomatología ansiosa']],
+  ['Afectivos',['inestabilidad anímica','desgano','tristeza','llanto','culpa','desesperanza']],
+  ['Postraumáticos',['reexperimentación','pensamientos intrusivos vinculados al siniestro','flashbacks y reminiscencias del siniestro','hiperalerta','evitación de estímulos asociados al siniestro','trastornos del sueño','manifestaciones neurovegetativas']],
+  ['Conductuales',['conductas evitativas','retraimiento y aislamiento','impulsividad','irritabilidad','baja tolerancia a la frustración']],
+  ['Cognitivos y del pensamiento',['ideas persecutorias','perseveración de ideas']],
+  ['Físicos',['dolor','limitación física','dificultad para deambular']]
+];
+const TEND = [['mejoria','Mejoría'],['persiste','Sin cambios'],['empeora','Empeoramiento']];
+const CONTEXTOS = ['en horario nocturno','en la vía pública','al salir del domicilio','en espacios cerrados','en espacios abiertos o concurridos','ante estímulos asociados al siniestro','en el ámbito laboral','en el transporte público'];
+const T_TIPO = ['exposición / reexposición','registro de pensamientos','actividades programadas','técnicas de relajación','otra'];
+const T_GRADO = [['completa','Realizada'],['parcial','Parcial'],['no','No realizada'],['dificultad','Con mayor dificultad']];
+const T_RES = [['positivos','Positivo'],['parciales','Parcial'],['sin','Sin resultado']];
+const INTERV = [
+  {id:'psico', label:'Psicoeducación', v:['Se realiza psicoeducación.','Se brinda psicoeducación.','Se trabaja desde un abordaje psicoeducativo.']},
+  {id:'hsueno', label:'Pautas de higiene del sueño', v:['Se otorgan pautas de higiene del sueño.','Se refuerzan pautas de higiene del sueño.','Se brindan pautas de higiene del sueño.']},
+  {id:'expo', label:'Exposición / reexposición', v:['Se trabaja con técnicas de exposición.','Se implementan técnicas de exposición.','Se abordan técnicas de exposición gradual.']},
+  {id:'reest', label:'Reestructuración cognitiva', v:['Se realiza reestructuración cognitiva.','Se trabaja reestructuración cognitiva.','Se implementan técnicas de reestructuración cognitiva.']},
+  {id:'afront', label:'Estrategias de afrontamiento', v:['Se trabajan estrategias de afrontamiento.','Se abordan estrategias de afrontamiento.','Se brindan herramientas de afrontamiento.']},
+  {id:'autorreg', label:'Estrategias de autorregulación', v:['Se brindan estrategias de autorregulación.','Se trabajan herramientas de autorregulación.','Se refuerzan estrategias de autorregulación emocional.']},
+  {id:'cont', label:'Contención orientada a la problemática planteada', v:['Se brinda contención orientada a la problemática planteada.','Se ofrece contención en relación con la problemática planteada.','Se trabaja desde la contención sobre la problemática planteada.']},
+  {id:'escucha', label:'Espacio de escucha', apoyo:true, v:['Se brinda espacio de escucha.','Se ofrece un espacio de escucha.','Se sostiene un espacio de escucha.']},
+  {id:'logros', label:'Refuerzo de logros', v:['Se refuerzan los logros alcanzados.','Se trabaja sobre los avances y logros alcanzados.','Se refuerzan los avances logrados.']}
+];
+const PLAN = [['ajuste','Ajustar la tarea pactada'],['nuevo','Pautar nueva tarea']];
+
+let st;
+function fresh(){
+  return {global:null, mag:null, sinCambios:false, actitud:[], eCurso:null, eAsoc:false, eDirectriz:null, eSenso:null,
+    sint:[], sintLibre:'', tareaOn:false, tItems:[], tgOpen:[], avOn:false, tGrado:null, tRes:null, tMot:'',
+    interv:[], plan:[], ajusteD:'', nCat:null, phAv:[], modal:null, punct:null, vr:{}, edit:[null,null,null], editBase:['','',''], gOpen:[], igOpen:[], retiro:null, riesgo:null, riesgoC:'', nTipo:'', nObj:'', nFrec:''};
+}
+
+/* Constructores de controles */
+function seg(el, opts, getter, setter){
+  el.innerHTML = '';
+  opts.forEach(([v,l]) => {
+    const b = document.createElement('button'); b.type='button'; b.textContent=l;
+    b.setAttribute('aria-pressed', getter()===v);
+    b.onclick = () => { setter(getter()===v ? null : v); sync(); };
+    el.appendChild(b);
+  });
+}
+function chips(el, opts, arr, onChange, cls){
+  el.innerHTML='';
+  opts.forEach(o => {
+    const v = typeof o==='string'? o : o.id, l = typeof o==='string'? cap(o) : o.label;
+    const b = document.createElement('button'); b.type='button'; b.className='chip';
+    b.textContent=l; b.setAttribute('aria-pressed', arr.includes(v));
+    b.onclick = () => { onChange(v); sync(); };
+    el.appendChild(b);
+  });
+}
+const toggleIn = (arr, v) => { const i=arr.indexOf(v); i>=0 ? arr.splice(i,1) : arr.push(v); };
+
+function symRow(name, custom){
+  const s = st.sint.find(x=>x.name===name);
+  const r = document.createElement('div'); r.className='srow';
+  const n = document.createElement('span'); n.className='sname'; n.textContent=cap(name); r.appendChild(n);
+  const sg = document.createElement('div'); sg.className='seg small'; sg.setAttribute('role','group'); sg.setAttribute('aria-label','Evolución de '+name);
+  TEND.forEach(([v,l]) => {
+    const b=document.createElement('button'); b.type='button'; b.textContent=l;
+    b.setAttribute('aria-pressed', !!s && s.tend===v);
+    b.onclick=()=>{
+      if (!s) st.sint.push({name, tend:v, ctx:[], showCtx:false});
+      else if (s.tend===v){ if (custom) s.tend=null; else st.sint.splice(st.sint.indexOf(s),1); }
+      else s.tend=v;
+      sync();
+    };
+    sg.appendChild(b);
+  });
+  r.appendChild(sg);
+  if (s){
+    const t=document.createElement('button'); t.type='button'; t.className='x';
+    t.textContent = s.showCtx ? 'Ocultar contexto' : (s.ctx.length ? 'Contexto ('+s.ctx.length+')' : 'Agregar contexto');
+    t.onclick=()=>{ s.showCtx=!s.showCtx; sync(); }; r.appendChild(t);
+    if (custom){ const q=document.createElement('button'); q.type='button'; q.className='x'; q.textContent='Quitar';
+      q.onclick=()=>{ st.sint.splice(st.sint.indexOf(s),1); sync(); }; r.appendChild(q); }
+    if (s.showCtx){
+      const c=document.createElement('div'); c.className='chips ctxs';
+      CONTEXTOS.forEach(ctx => {
+        const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=cap(ctx);
+        b.setAttribute('aria-pressed', s.ctx.includes(ctx));
+        b.onclick=()=>{ toggleIn(s.ctx, ctx); sync(); }; c.appendChild(b);
+      });
+      r.appendChild(c);
+    }
+  }
+  return r;
+}
+function renderSint(){
+  const box = $('sint-cat'); box.innerHTML='';
+  SINT_GROUPS.forEach(([g, items]) => {
+    const has = st.sint.some(s=>items.includes(s.name));
+    const open = has || st.gOpen.includes(g);
+    const w = document.createElement('div'); w.className='sgroup';
+    const lab = document.createElement('label'); lab.className='toggle';
+    lab.innerHTML = '<input type="checkbox"> Síntomas '+esc(g.toLowerCase());
+    const cb = lab.querySelector('input'); cb.checked = open;
+    cb.onchange = () => {
+      if (cb.checked){ if (!st.gOpen.includes(g)) st.gOpen.push(g); }
+      else { st.gOpen = st.gOpen.filter(x=>x!==g); st.sint = st.sint.filter(s=>!items.includes(s.name)); }
+      sync();
+    };
+    w.appendChild(lab);
+    if (open) items.forEach(n => w.appendChild(symRow(n,false)));
+    box.appendChild(w);
+  });
+  const cu = $('sint-rows'); cu.innerHTML='';
+  st.sint.filter(s=>s.custom).forEach(s => cu.appendChild(symRow(s.name,true)));
+}
+
+function renderTareas(){
+  const box = $('t-cat'); box.innerHTML='';
+  INT_GROUPS.forEach(([g, ids]) => {
+    const has = st.tItems.some(id=>ids.includes(id));
+    const open = has || st.tgOpen.includes(g);
+    const w = document.createElement('div'); w.className='sgroup';
+    const lab = document.createElement('label'); lab.className='toggle';
+    lab.innerHTML = '<input type="checkbox"> Tareas '+esc(g.toLowerCase());
+    const cb = lab.querySelector('input'); cb.checked = open;
+    cb.onchange = () => {
+      if (cb.checked){ if (!st.tgOpen.includes(g)) st.tgOpen.push(g); }
+      else { st.tgOpen = st.tgOpen.filter(x=>x!==g); st.tItems = st.tItems.filter(id=>!ids.includes(id)); }
+      sync();
+    };
+    w.appendChild(lab);
+    if (open){
+      const c = document.createElement('div'); c.className='chips'; c.style.padding='4px 0 6px 24px';
+      chips(c, ids.map(id=>INTERV.find(d=>d.id===id)), st.tItems, v=>toggleIn(st.tItems,v));
+      w.appendChild(c);
+    }
+    box.appendChild(w);
+  });
+}
+function renderInt(){
+  const box = $('int-cat'); box.innerHTML='';
+  INT_GROUPS.forEach(([g, ids]) => {
+    const has = st.interv.some(it=>ids.includes(it.id));
+    const open = has || st.igOpen.includes(g);
+    const w = document.createElement('div'); w.className='sgroup';
+    const lab = document.createElement('label'); lab.className='toggle';
+    lab.innerHTML = '<input type="checkbox"> Intervenciones '+esc(g.toLowerCase());
+    const cb = lab.querySelector('input'); cb.checked = open;
+    cb.onchange = () => {
+      if (cb.checked){ if (!st.igOpen.includes(g)) st.igOpen.push(g); }
+      else { st.igOpen = st.igOpen.filter(x=>x!==g); st.interv = st.interv.filter(it=>!ids.includes(it.id)); }
+      sync();
+    };
+    w.appendChild(lab);
+    if (open){
+      const c = document.createElement('div'); c.className='chips'; c.style.padding='4px 0 6px 24px';
+      ids.forEach(id => {
+        const def = INTERV.find(d=>d.id===id);
+        const on = st.interv.some(x=>x.id===id);
+        const b = document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=def.label;
+        b.setAttribute('aria-pressed', on);
+        b.onclick = () => { if (on) st.interv = st.interv.filter(x=>x.id!==id); else st.interv.push({id}); sync(); };
+        c.appendChild(b);
+      });
+      w.appendChild(c);
+    }
+    box.appendChild(w);
+  });
+}
+
+/* Variantes de redacción: se fijan al elegir el dato y cambian con "Otra redacción" */
+function pick(key, arr){
+  const r = st.vr[key];
+  if (!r || r.n !== arr.length) st.vr[key] = {i: Math.floor(Math.random()*arr.length), n: arr.length};
+  return arr[st.vr[key].i];
+}
+function reroll(){
+  Object.values(st.vr).forEach(r => { if (r.n > 1){ let j; do { j = Math.floor(Math.random()*r.n); } while (j === r.i); r.i = j; } });
+}
+
+/* Generación del texto */
+function build(){
+  const r = {estable:$('r-estable').checked, apoyo:$('r-apoyo').checked, present:$('r-present').checked};
+  const pend = [];
+  const p0 = [], p1 = [], p2 = [];
+
+  // Presentación
+  if (st.modal || st.punct) p0.push(pick('asist:'+(st.modal||'')+':'+(st.punct||''), ASIST_V[(st.modal||'')+':'+(st.punct||'')]));
+  if (st.actitud.length) p0.push(pick('actitud', ACTITUD_V)(joinY(st.actitud)));
+  if (st.eCurso) p0.push(pick('curso:'+st.eCurso, ESTADO_V['curso:'+st.eCurso]));
+  if (st.eAsoc) p0.push(pick('asoc', ESTADO_V.asoc));
+  if (st.eDirectriz) p0.push(pick('directriz:'+st.eDirectriz, ESTADO_V['directriz:'+st.eDirectriz]));
+  if (st.eSenso) p0.push(pick('senso:'+st.eSenso, ESTADO_V['senso:'+st.eSenso]));
+  if (!p0.length && r.present){ p0.push(M('presentación observada')); pend.push('Registrar la presentación observada en sesión.'); }
+
+  // Estado global
+  if (!st.global){ /* opcional */ }
+  else if (st.global==='estable'){
+    p1.push(pick('global:estable', GLOBAL_V.estable));
+    if (st.sinCambios) p1.push(pick('sincambios', SINCAMBIOS_V));
+  } else {
+    const mag = st.mag ? (st.global==='favorable' ? st.mag : {leve:'leve',moderada:'moderado',marcada:'marcado'}[st.mag]) : M('magnitud');
+    if (!st.mag) pend.push('Indicar la magnitud del cambio.');
+    p1.push(pick('global:'+st.global, GLOBAL_V[st.global])(mag));
+  }
+
+  // Síntomas
+  const sintExento = st.global==='estable' && st.sinCambios;
+  if (st.sint.length){
+    const groups = {};
+    st.sint.forEach(s => {
+      const k = s.tend || '_';
+      (groups[k] = groups[k] || []).push(esc(s.name) + (s.ctx.length ? ' ' + joinY(s.ctx) : ''));
+      if (!s.tend) pend.push(`Indicar cómo evolucionó: ${s.name}.`);
+    });
+    ['mejoria','persiste','empeora'].forEach(k => { if (groups[k]) p1.push(pick('tend:'+k, TEND_V[k])(groups[k]) + '.'); });
+    if (groups._) p1.push(`Refiere ${M('evolución')} ${deList(groups._)}.`);
+  } else if (!sintExento){
+    p1.push(M('síntomas referidos')); pend.push('Elegir al menos un síntoma referido, o marcar “Estable” sin cambios significativos.');
+  }
+  if (st.avOn) st.phAv.forEach(id => { const d = PH_AV.find(x=>x.id===id); p1.push(pick('av:'+id, d.v)); });
+  if (st.sintLibre.trim()) p1.push(esc(st.sintLibre.trim().replace(/\.?$/,'.')));
+
+  // Tarea pactada
+  if (st.tareaOn){
+    const labels = INTERV.filter(d=>st.tItems.includes(d.id)).map(d=>d.label.toLowerCase().replace(' / ','/'));
+    if (!labels.length) pend.push('Indicar cuál era la tarea pactada.');
+    const base = labels.length>1 ? `las tareas pactadas (${joinY(labels)})` : `la tarea pactada (${labels[0] || M('tarea pactada')})`;
+    let s;
+    if (st.tGrado) s = pick('grado:'+st.tGrado, GRADO_V[st.tGrado])(base);
+    else { s = `${M('cumplimiento')} ${base}`; pend.push('Indicar el cumplimiento de la tarea.'); }
+    if (st.tGrado !== 'no'){
+      const res = st.tRes ? pick('res:'+st.tRes, RES_V[st.tRes]) : null;
+      s += ', ' + (res || M('resultado'));
+      if (!res) pend.push('Indicar el resultado de la tarea.');
+    } else if (st.tMot.trim()) s += ', por ' + esc(st.tMot.trim());
+    p2.push(s + '.');
+  }
+
+  // Intervenciones
+  let validas = 0;
+  INTERV.forEach(def => {
+    if (!st.interv.some(x=>x.id===def.id)) return;
+    p2.push(pick('int:'+def.id, def.v));
+    if (!def.apoyo || r.apoyo) validas++;
+  });
+  const requiereInt = !(st.global==='estable' && !r.estable);
+  if (requiereInt && validas===0){
+    if (!st.interv.length) p2.push(M('intervención realizada'));
+    pend.push(st.interv.length && !r.apoyo ? 'Con las reglas actuales, el espacio de escucha no alcanza: agregar otra intervención.' : 'Registrar al menos una intervención.');
+  }
+
+  // Cierre
+  if (st.riesgo==='no') p2.push(pick('riesgo:no', RIESGO_NO_V));
+  else if (st.riesgo==='si'){
+    const c = st.riesgoC.trim();
+    p2.push('Presenta al momento actual ideas de auto/heteroagresión. Conducta adoptada: ' + (c?esc(c):M('conducta adoptada')) + '.');
+    if (!c) pend.push('Registrar la conducta adoptada ante el riesgo.');
+  }
+  if (st.retiro){ const d = PH_RETIRO.find(x=>x.id===st.retiro); p2.push(pick('retiro', RETIRO_V)(d.x)); }
+
+  return {p0, p1, p2, pend};
+}
+const toHTML = s => s.replace(/\u0001(.*?)\u0002/g, '<mark>[$1]</mark>');
+const toPlain = s => s.replace(/\u0001(.*?)\u0002/g, '[$1]').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
+
+let last, gen = ['','',''];
+function renderOut(){
+  last = build();
+  const parts = [last.p0, last.p1, last.p2];
+  parts.forEach((p, i) => {
+    const html = p.length ? toHTML(p.join(' ')) : '';
+    gen[i] = p.length ? toPlain(p.join(' ')) : '';
+    const out = $('out'+i), stale = $('stale'+i);
+    $('ed'+i).classList.toggle('hidden', st.edit[i]===null);
+    if (st.edit[i]===null){
+      if (document.activeElement !== out || out.dataset.html !== html){ out.innerHTML = html; out.dataset.html = html; }
+      stale.classList.add('hidden');
+    } else if (gen[i] !== st.editBase[i]){
+      stale.innerHTML = 'El formulario cambió después de editar esta sección. <button type="button">Regenerar sección</button>';
+      stale.querySelector('button').onclick = () => { st.edit[i] = null; renderOut(); };
+      stale.classList.remove('hidden');
+    } else stale.classList.add('hidden');
+  });
+  const s = $('status');
+  if (!last.pend.length){ s.className='status ok'; s.textContent='Completo según las reglas actuales.'; }
+  else {
+    s.className='status';
+    s.innerHTML = `<strong>${last.pend.length} ${last.pend.length===1?'dato pendiente':'datos pendientes'}</strong><ul>${last.pend.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>`;
+  }
+  $('copy').disabled = last.pend.length > 0;
+  $('restore').disabled = st.edit.every(e => e===null);
+}
+[0,1,2].forEach(i => {
+  const out = $('out'+i);
+  out.addEventListener('input', () => {
+    if (st.edit[i]===null) st.editBase[i] = gen[i];
+    st.edit[i] = (out.innerText !== undefined ? out.innerText : out.textContent).trim();
+    renderOut();
+  });
+  out.addEventListener('paste', e => {
+    e.preventDefault();
+    const t = (e.clipboardData || window.clipboardData).getData('text/plain');
+    document.execCommand('insertText', false, t);
+  });
+});
+
+function sync(rows){
+  seg($('global'), GLOBAL, ()=>st.global, v=>{ st.global=v; if(v==='estable') st.mag=null; else st.sinCambios=false; });
+  $('mag-wrap').classList.toggle('hidden', !st.global || st.global==='estable');
+  seg($('mag'), MAG, ()=>st.mag, v=>st.mag=v);
+  $('sc-wrap').classList.toggle('hidden', st.global!=='estable');
+  $('sin-cambios').checked = st.sinCambios;
+
+  chips($('actitud'), ACTITUD, st.actitud, v=>toggleIn(st.actitud,v));
+  seg($('e-curso'), E_CURSO, ()=>st.eCurso, v=>st.eCurso=v);
+  chips($('e-asoc'), [{id:'asoc',label:'Coherente'}], st.eAsoc?['asoc']:[], ()=>{ st.eAsoc=!st.eAsoc; });
+  seg($('e-directriz'), E_SINO, ()=>st.eDirectriz, v=>st.eDirectriz=v);
+  seg($('e-senso'), E_SINO, ()=>st.eSenso, v=>st.eSenso=v);
+
+  seg($('modal'), MODAL, ()=>st.modal, v=>st.modal=v);
+  seg($('punct'), PUNCT, ()=>st.punct, v=>st.punct=v);
+  chips($('ph-av'), PH_AV, st.phAv, v=>toggleIn(st.phAv,v));
+  chips($('ph-retiro'), PH_RETIRO, st.retiro?[st.retiro]:[], v=>{ st.retiro = st.retiro===v?null:v; });
+  seg($('riesgo'), RIESGO, ()=>st.riesgo, v=>st.riesgo=v);
+  $('riesgo-c-wrap').classList.toggle('hidden', st.riesgo!=='si');
+
+  renderSint();
+
+  $('tarea-on').checked = st.tareaOn;
+  $('tarea-box').classList.toggle('hidden', !st.tareaOn);
+  renderTareas();
+  $('av-on').checked = st.avOn;
+  $('av-box').classList.toggle('hidden', !st.avOn);
+  seg($('t-grado'), T_GRADO, ()=>st.tGrado, v=>st.tGrado=v);
+  $('t-res-wrap').classList.toggle('hidden', st.tGrado==='no');
+  $('t-mot-wrap').classList.toggle('hidden', st.tGrado!=='no');
+  seg($('t-res'), T_RES, ()=>st.tRes, v=>st.tRes=v);
+
+  renderInt();
+
+  renderOut();
+}
+
+/* Campos de texto: actualizan estado sin redibujar el formulario */
+const bind = (id, key) => { $(id).addEventListener('input', e => { st[key]=e.target.value; renderOut(); }); };
+[['sint-libre','sintLibre'],['t-mot','tMot']].forEach(a=>bind(...a));
+$('riesgo-c').addEventListener('input', e => { st.riesgoC=e.target.value; renderOut(); });
+function fillInputs(){
+  $('riesgo-c').value=st.riesgoC;
+  $('sint-libre').value=st.sintLibre; $('t-mot').value=st.tMot;
+}
+$('sin-cambios').onchange = e => { st.sinCambios = e.target.checked; renderOut(); };
+$('tarea-on').onchange = e => { st.tareaOn = e.target.checked; if (!st.tareaOn){ st.tItems=[]; st.tgOpen=[]; st.tGrado=null; st.tRes=null; st.tMot=''; $('t-mot').value=''; } sync(); };
+$('av-on').onchange = e => { st.avOn = e.target.checked; if (!st.avOn) st.phAv=[]; sync(); };
+['r-estable','r-apoyo','r-present'].forEach(id => $(id).onchange = renderOut);
+$('sint-add').onclick = () => {
+  const v = $('sint-otro').value.trim().toLowerCase();
+  if (v && !st.sint.some(s=>s.name===v)) st.sint.push({name:v, tend:null, ctx:[], showCtx:false, custom:true});
+  $('sint-otro').value=''; sync();
+};
+$('sint-otro').addEventListener('keydown', e => { if (e.key==='Enter'){ e.preventDefault(); $('sint-add').click(); } });
+
+function load(obj){ st = Object.assign(fresh(), obj); fillInputs(); sync(); }
+$('reset').onclick = () => load({});
+$('reroll').onclick = () => {
+  reroll(); renderOut();
+  const ed = st.edit.some(e => e!==null);
+  $('toast').textContent = ed ? 'Nueva redacción generada. Las secciones editadas no se modificaron.' : 'Nueva redacción generada';
+  setTimeout(()=>$('toast').textContent='', 3000);
+};
+$('restore').onclick = () => { st.edit = [null,null,null]; renderOut(); };
+try { $('prev').value = localStorage.getItem('evolutivo-anterior') || ''; } catch(e) {}
+$('prev').addEventListener('input', () => { try { localStorage.setItem('evolutivo-anterior', $('prev').value); } catch(e) {} });
+const CLR = {
+  pres:['modal','punct','actitud','eCurso','eAsoc','eDirectriz','eSenso'],
+  global:['global','mag','sinCambios'],
+  sint:['sint','gOpen','sintLibre'],
+  tareas:['tareaOn','tItems','tgOpen','tGrado','tRes','tMot','avOn','phAv'],
+  interv:['interv','igOpen'],
+  cierre:['riesgo','riesgoC','retiro']
+};
+document.querySelectorAll('.block h2 .clr').forEach(b => b.onclick = () => {
+  const f = fresh(); CLR[b.dataset.clr].forEach(k => { st[k] = f[k]; });
+  fillInputs(); sync();
+});
+$('ej1').onclick = () => load({
+  global:'desfavorable', mag:'moderada', actitud:['colaboradora'], eCurso:'enlentecido', eDirectriz:'si',
+  sint:[{name:'manifestaciones neurovegetativas', tend:'empeora', ctx:[]},{name:'retraimiento y aislamiento', tend:'empeora', ctx:[]}],
+  tareaOn:true, tItems:['expo'], tGrado:'dificultad', tRes:'parciales',
+  interv:[{id:'psico'},{id:'expo'}], igOpen:['Cognitivo-conductuales'],
+  gOpen:[], modal:'presencial', punct:'horario', riesgo:'no', retiro:'estab'
+});
+$('ej2').onclick = () => load({
+  global:'estable', sinCambios:true, actitud:['comunicativa','colaboradora'],
+  interv:[{id:'cont'},{id:'logros'}],
+  eCurso:'fluido', eAsoc:true, eDirectriz:'si', eSenso:'no', modal:'virtual', punct:'horario', avOn:true, phAv:['adherencia'], riesgo:'no', retiro:'tranq'
+});
+
+$('copy').onclick = async () => {
+  const secs = ['Presentación en sesión','Descripción de la evolución de los síntomas','Intervenciones terapéuticas'];
+  const text = [0,1,2].map(i => (st.edit[i]!==null ? st.edit[i] : gen[i]).trim()).filter(Boolean).join('\n\n');
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; } catch(e) {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand('copy'); } catch(_){} ta.remove();
+  }
+  $('toast').textContent = ok ? 'Evolutivo copiado' : 'No se pudo copiar: seleccioná el texto manualmente';
+  setTimeout(()=>$('toast').textContent='', 2500);
+};
+
+load({});
+})();
+</script>
+</body>
+</html>
